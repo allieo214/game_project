@@ -7,16 +7,18 @@
 
 
 // display
-GLuint textureNames[3] = { 0, 1, 2 };
-int textureUnits[3] = { 0, 1, 2 };
+GLuint textureNames[5] = { 0, 1, 2, 3, 4};
+int textureUnits[5] = { 0, 0, 0, 0, 0};
 int winW = 3000;
 int winH = 1500;
 
 //shaders
 GLuint backShader = 0;
 GLuint foreShader = 0;
+GLuint charShader = 0;
 GLuint vBuffer = 0;
-vec2 points[] = { vec2(-1,-1.5), vec2(-1,1.5), vec2(1,1.5), vec2(1,-1.5) };
+vec2 points[] = { vec2(-2,-1.5), vec2(-2,1.5), vec2(0.5, 1.25), vec2(0.5,-1.25) };
+vec2 char_pts[] = { vec2(-1, -1), vec2(-1,1), vec2(1, 1), vec2(1,-1) };
 vec2 uvs[] = { vec2(0,0), vec2(1,0), vec2(1,1), vec2(0,1) };
 
 // interactions
@@ -66,7 +68,7 @@ void DisplayForeground() {
         out vec2 vUv;
         void main() {
             vUv = uv;
-            gl_Position = view*vec4(point, 1, 1.25);
+            gl_Position = view*vec4(point, 1, 1);
         }
     )";
 	const char *pShader = R"(
@@ -100,7 +102,50 @@ void DisplayForeground() {
 	glDrawArrays(GL_QUADS, 0, 4);
 }
 
-// Mouse
+void DisplayCharacter() {
+
+	const char *vShader = R"(
+        #version 330
+		in vec2 point;
+		in vec2 uv;
+		uniform mat4 view;
+        out vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = view*vec4(point, 1, 1);
+        }
+    )";
+	const char *pShader = R"(
+        #version 330
+        in vec2 vUv;
+        out vec4 pColor;
+        uniform sampler2D textureImage;
+        uniform sampler2D textureMat;
+        void main() {
+            pColor = texture(textureImage, vUv).r;
+			pColor.a = texture(textureMat, vUv).r;
+        }
+    )";
+
+	if (!charShader)
+		charShader = LinkProgramViaCode(&vShader, &pShader);
+	glUseProgram(charShader);
+	glActiveTexture(GL_TEXTURE0 + textureUnits[3]);
+	glBindTexture(GL_TEXTURE_2D, textureNames[3]);
+	SetUniform(charShader, "textureImage", textureUnits[3]);
+	glActiveTexture(GL_TEXTURE0 + textureUnits[4]);
+	glBindTexture(GL_TEXTURE_2D, textureNames[4]);
+	SetUniform(charShader, "textureMat", textureUnits[4]);
+	VertexAttribPointer(charShader, "point", 2, 0, (void *)0);
+	VertexAttribPointer(charShader, "uv", 2, 0, (void *) sizeof(char_pts));
+	mat4 trans = Translate(objectX, objectY, 0);
+	mat4 rot = RotateZ(90);
+	mat4 scale = Scale(objectScale);
+	SetUniform(charShader, "view", trans*rot*scale);
+	glDrawArrays(GL_QUADS, 0, 4);
+
+}
+
 
 int WindowHeight(GLFWwindow *w) {
 	int width, height;
@@ -158,30 +203,26 @@ int main(int ac, char **av) {
 	glfwMakeContextCurrent(w);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	// read background, foreground, and mat textures
-	glGenTextures(1, textureNames);
-	textureNames[0] = LoadTexture("C:/Users/allis/Graphics/Textures/background1.tga", textureUnits[0]);
-	textureNames[1] = LoadTexture("C:/Users/allis/Graphics/Textures/dialogue_box3.tga", textureUnits[1]);
-	textureNames[2] = LoadTexture("C:/Users/allis/Graphics/Textures/dialogue_box3.tga", textureUnits[2]);
-	InitVertexBuffer();
-	/*
-	textureNames[0] = LoadTexture("C:/Users/jules/SeattleUniversity/Exe/Earth.tga", textureUnits[0]);
-	textureNames[1] = LoadTexture("C:/Users/jules/SeattleUniversity/Exe/Lily.tga", textureUnits[1]);
-	textureNames[2] = LoadTexture("C:/Users/jules/SeattleUniversity/Exe/Mat.tga", textureUnits[2]);
-	InitVertexBuffer();*/
+	glGenTextures(3, textureNames);
 
-	// callbacks
-	/*glfwSetMouseButtonCallback(w, MouseButton);
-	glfwSetCursorPosCallback(w, MouseMove);
-	glfwSetScrollCallback(w, MouseWheel);
-	glfwSetWindowSizeCallback(w, Resize);*/
+	textureNames[0] = LoadTexture("C:/Users/allis/Graphics/Textures/sci_fi_background2.tga", textureUnits[0]);
+	textureNames[1] = LoadTexture("C:/Users/allis/Graphics/Textures/dialogue_box.tga", textureUnits[1]);
+	textureNames[2] = LoadTexture("C:/Users/allis/Graphics/Textures/dialogue_box.tga", textureUnits[2]);
+	textureNames[3] = LoadTexture("C:/Users/allis/Graphics/Textures/TEST.tga", textureUnits[3]);
+	textureNames[4] = LoadTexture("C:/Users/allis/Graphics/Textures/TEST.tga", textureUnits[4]);
+	InitVertexBuffer();
+
 
 	// event loop
 	glfwSwapInterval(1);
 	while (!glfwWindowShouldClose(w)) {
 		glEnable(GL_BLEND);
+		glEnable(GL_TEXTURE_2D);
+		
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		DisplayBackground();
-		DisplayForeground();
+		DisplayCharacter();
+		//DisplayForeground();
 		glFlush();
 		glfwSwapBuffers(w);
 		glfwPollEvents();
@@ -191,104 +232,3 @@ int main(int ac, char **av) {
 	glfwDestroyWindow(w);
 	glfwTerminate();
 }
-
-
-
-
-
-/*float backCoords[] = {
-	0.0f, 0.0f, //bottom left
-	1.0f, 0.0f, //bottom right
-	0.0f, 1.0f, //top left
-	1.0f, 1.0f, //top right
-}; 
-
-vec2 texcoord;
-vec3 Color;
-vec2 Texcoord;
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-	
-	glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow *window) {
-	
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-}
-
-int main() {
-	Texcoord = texcoord;
-
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	GLFWwindow* window = glfwCreateWindow(512, 512, "Background", NULL, NULL);
-	if (window == NULL) {
-		std::cout << "Failed to create window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-
-	glfwMakeContextCurrent(window);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return -1;
-	}
-
-	//glViewport(0, 0, 512, 512);
-
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	//framebuffer_size_callback(window, 512, 512);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(backCoords), backCoords, GL_STATIC_DRAW);
-
-
-
-	int width, height;
-	unsigned char* image = SOIL_load_image("background1.png", &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	SOIL_free_image_data(image);
-
-	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float), 0);
-	
-
-	//unsigned char* image = SOIL_load_image("img.png", &width, &height, 0, SOIL_LOAD_RGB);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-
-	while (!glfwWindowShouldClose(window)) {
-		//input
-		processInput(window);
-
-		//render stuff
-
-
-		//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		//glClear(GL_COLOR_BUFFER_BIT);
-
-		//check and call events and swap the buffers
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
-
-	glfwTerminate();
-
-	return 0;
-
-}*/
