@@ -26,9 +26,18 @@ struct conversationNode {
 	vec3 color; // 000 initalization
 	conversationNode* y;
 	conversationNode* n;
+	
+	conversationNode(std::string main, std::string yes, std::string no, conversationNode* yesNode = NULL, conversationNode* noNode = NULL) {
+		statement = main;
+		optionY = yes;
+		optionN = no;
+		color = { 0, 0 ,0 };
+		y = yesNode;
+		n = noNode;
+	}
 };
 
-struct conversationNode* newNode(std::string dialogue, std::string dialogue_y, std::string dialogue_n)
+struct conversationNode* newNode(std::string dialogue, std::string dialogue_y = "", std::string dialogue_n = "", conversationNode* yes = NULL, conversationNode* no = NULL)
 {
 	// Allocate memory for new node  
 	struct conversationNode* node = (struct conversationNode*)malloc(sizeof(struct conversationNode));
@@ -41,8 +50,8 @@ struct conversationNode* newNode(std::string dialogue, std::string dialogue_y, s
 	node->color = { 0, 0 ,0 };
 
 	// Initialize left and right children as NULL 
-	node->y = NULL;
-	node->n = NULL;
+	node->y = yes;
+	node->n = no;
 	return(node);
 }
 
@@ -54,15 +63,19 @@ conversationNode *create(std::ifstream &f)
 	std::string no;
 	std::string delimiter = "\\";
 	std::stack<std::string> s;
-
-	p = (conversationNode*)malloc(sizeof(conversationNode));
+	
 	std::string str;
 	std::getline(f, str);
 
-	int index = str.length() - 1;
-	if (str.at(index) == ';')
-		return NULL;
+	std::cout << str << std::endl;
 
+	int index = str.length() - 1;
+	if (str.at(index) == ';') {
+		p = new conversationNode(main, "", "", NULL, NULL);
+		return p;
+	}
+
+	//p = (conversationNode*)malloc(sizeof(conversationNode));
 	size_t pos = 0;
 	std::string token;
 	while ((pos = str.find(delimiter)) != std::string::npos) {
@@ -72,18 +85,25 @@ conversationNode *create(std::ifstream &f)
 	}
 	
 	no = s.top();
+	//std::cout << no << std::endl;
 	s.pop();
 	yes = s.top();
+	//std::cout << yes << std::endl;
 	s.pop();
 	main = s.top();
 	s.pop();
+	//std::cout << main << std::endl;
 
-	p->statement = main;
+	conversationNode* yesNode = create(f);
+	conversationNode* noNode = create(f);
+	p = new conversationNode(main, yes, no, yesNode, noNode);
+	//f.close();
+	/*p->statement = main;
 	p->optionN = no;
-	p->optionY = yes;
+	p->optionY = yes;*/
 
-	p->y= create(f);
-	p->n = create(f);
+	//p->y = create(f);
+	//p->n = create(f);
 
 	return p;
 }
@@ -92,11 +112,9 @@ void loadDialogue(std::string fn) {
 	std::ifstream file(fn);
 	
 	conversationNode *root;
-	if (file.is_open()) {
+	if(file.is_open()){
 		root = create(file);
-	}
-	else {
-		std::cout << "Not working" << std::endl;
+	
 	}
 }
 

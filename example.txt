@@ -1,3 +1,6 @@
-hi, how are you?\I'm good*\I'm terrible*
-that's good!;
-oh.;
+HI, how are you?\I'm good*\I'm terrible*\
+that's good!\ye*\yup*\
+oh.\...*\sorry*\
+Is this working?\Yes*\No*\
+Yay!;
+Boo;
