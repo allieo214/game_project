@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <stack>
 
 Background background;
 Dialogue_Box dialogue;
@@ -45,16 +46,54 @@ struct conversationNode* newNode(std::string dialogue, std::string dialogue_y, s
 	return(node);
 }
 
+conversationNode *create(std::ifstream &f)
+{
+	conversationNode *p;
+	std::string main;
+	std::string yes;
+	std::string no;
+	std::string delimiter = "\\";
+	std::stack<std::string> s;
+
+	p = (conversationNode*)malloc(sizeof(conversationNode));
+	std::string str;
+	std::getline(f, str);
+
+	int index = str.length() - 1;
+	if (str.at(index) == ';')
+		return NULL;
+
+	size_t pos = 0;
+	std::string token;
+	while ((pos = str.find(delimiter)) != std::string::npos) {
+		token = str.substr(0, pos);
+		s.push(token);
+		str.erase(0, pos + delimiter.length());
+	}
+	
+	no = s.top();
+	s.pop();
+	yes = s.top();
+	s.pop();
+	main = s.top();
+	s.pop();
+
+	p->statement = main;
+	p->optionN = no;
+	p->optionY = yes;
+
+	p->y= create(f);
+	p->n = create(f);
+
+	return p;
+}
 void loadDialogue(std::string fn) {
 	std::string line;
 	std::ifstream file(fn);
 	
 	conversationNode *root;
 	if (file.is_open()) {
-		while (std::getline(file, line)){
-			std::cout<<line<<std::endl;
-
-		}
+		root = create(file);
 	}
 	else {
 		std::cout << "Not working" << std::endl;
