@@ -37,7 +37,7 @@ struct conversationNode {
 	}
 };
 
-struct conversationNode* newNode(std::string dialogue, std::string dialogue_y = "", std::string dialogue_n = "", conversationNode* yes = NULL, conversationNode* no = NULL)
+struct conversationNode* newNode(std::string dialogue, std::string dialogue_y, std::string dialogue_n, conversationNode* yes = NULL, conversationNode* no = NULL)
 {
 	// Allocate memory for new node  
 	struct conversationNode* node = (struct conversationNode*)malloc(sizeof(struct conversationNode));
@@ -67,11 +67,18 @@ conversationNode *create(std::ifstream &f)
 	std::string str;
 	std::getline(f, str);
 
-	std::cout << str << std::endl;
+	//std::cout << "START" << std::endl;
+	//std::cout << str << std::endl;
 
 	int index = str.length() - 1;
+	if (str == "") {
+		return new conversationNode("", "","", NULL, NULL);
+	}
+
 	if (str.at(index) == ';') {
-		p = new conversationNode(main, "", "", NULL, NULL);
+		//std::cout << "SINGLE OPTION" << std::endl;
+		//std::cout << str << std::endl;
+		p = new conversationNode(str, "", "", NULL, NULL);
 		return p;
 	}
 
@@ -85,17 +92,24 @@ conversationNode *create(std::ifstream &f)
 	}
 	
 	no = s.top();
+	//std::cout << "no" << std::endl;
 	//std::cout << no << std::endl;
 	s.pop();
 	yes = s.top();
+	//std::cout << "yes" << std::endl;
 	//std::cout << yes << std::endl;
 	s.pop();
+	//std::cout << "MAIN" << std::endl;
 	main = s.top();
 	s.pop();
 	//std::cout << main << std::endl;
 
 	conversationNode* yesNode = create(f);
 	conversationNode* noNode = create(f);
+	/*std::cout << "yesNode->statement" << std::endl;
+	std::cout << yesNode->statement << std::endl;
+	std::cout << "noNode->statement" << std::endl;
+	std::cout << noNode->statement << std::endl;*/
 	p = new conversationNode(main, yes, no, yesNode, noNode);
 	//f.close();
 	/*p->statement = main;
@@ -104,10 +118,11 @@ conversationNode *create(std::ifstream &f)
 
 	//p->y = create(f);
 	//p->n = create(f);
+	//std::cout << "END" << std::endl;
 
 	return p;
 }
-void loadDialogue(std::string fn) {
+conversationNode* loadDialogue(std::string fn) {
 	std::string line;
 	std::ifstream file(fn);
 	
@@ -116,6 +131,11 @@ void loadDialogue(std::string fn) {
 		root = create(file);
 	
 	}
+	else {
+		root = NULL;
+	}
+
+	return root;
 }
 
 // display
@@ -183,6 +203,31 @@ void MouseMove(GLFWwindow *w, double x, double y) {
 int main() {
 
 	std::string end;
-	loadDialogue("example.txt");
+	
+	conversationNode* yes;
+	conversationNode* no;
+	conversationNode* curr = loadDialogue("example.txt");
+	std::cout << curr->statement << std::endl;
+	std::cout << curr->optionY << std::endl;
+	std::cout << curr->optionN << std::endl;
+	no = curr->n;
+	yes = curr->y;
+	std::cout << "YES BRANCH" << std::endl;
+	std::cout << yes->statement << std::endl;
+	std::cout << yes->optionY << std::endl;
+	std::cout << yes->y->statement << std::endl;
+	std::cout << yes->y->optionY<< std::endl;
+	std::cout << yes->y->y->statement << std::endl;
+	std::cout << yes->y->optionN << std::endl;
+	std::cout << yes->y->n->statement << std::endl;
+	std::cout << yes->optionN << std::endl;
+	std::cout << yes->n->statement << std::endl;
+	std::cout << yes->n->optionY << std::endl;
+	std::cout << yes->n->y->statement << std::endl;
+	std::cout << yes->n->optionN << std::endl;
+	std::cout << yes->n->n->statement << std::endl;
+	std::cout << "NO BRANCH" << std::endl;
+	std::cout << no->statement << std::endl;
+	
 	std::cin >> end;
 }

@@ -1,6 +1,10 @@
 HI, how are you?\I'm good*\I'm terrible*\
-that's good!\ye*\yup*\
-oh.\...*\sorry*\
-Is this working?\Yes*\No*\
-Yay!;
-Boo;
+that's good, is this working?\Yes*\No*\
+this is so cool! are we having a conversation?\Yes*\No*\
+Yay, conversation!;
+Oh, no, no conversation;
+Boo, I wonder why?\Try this*\No idea*\
+Thanks!;
+...helpful;
+oh;
+
