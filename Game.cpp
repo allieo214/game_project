@@ -7,16 +7,24 @@
 #include "Background.h"
 #include "Dialogue_Box.h"
 #include "CharacterGirl.h"
+#include "Dialogue_Choice1.h"
+#include "Dialogue_Choice2.h"
 #include "Text.h"
 #include <ft2build.h>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <stack>
+#include <conio.h>
+
 
 Background background;
 Dialogue_Box dialogue;
+Dialogue_Choice1 choice1;
+Dialogue_Choice2 choice2;
 CharacterGirl characterG;
+CharacterGirl upset;
+CharacterGirl blush;
 
 struct conversationNode {
 
@@ -67,8 +75,7 @@ conversationNode *create(std::ifstream &f)
 	std::string str;
 	std::getline(f, str);
 
-	//std::cout << "START" << std::endl;
-	//std::cout << str << std::endl;
+	std::cout << str << std::endl;
 
 	int index = str.length() - 1;
 	if (str == "") {
@@ -76,13 +83,10 @@ conversationNode *create(std::ifstream &f)
 	}
 
 	if (str.at(index) == ';') {
-		//std::cout << "SINGLE OPTION" << std::endl;
-		//std::cout << str << std::endl;
 		p = new conversationNode(str, "", "", NULL, NULL);
 		return p;
 	}
 
-	//p = (conversationNode*)malloc(sizeof(conversationNode));
 	size_t pos = 0;
 	std::string token;
 	while ((pos = str.find(delimiter)) != std::string::npos) {
@@ -92,33 +96,15 @@ conversationNode *create(std::ifstream &f)
 	}
 	
 	no = s.top();
-	//std::cout << "no" << std::endl;
-	//std::cout << no << std::endl;
 	s.pop();
 	yes = s.top();
-	//std::cout << "yes" << std::endl;
-	//std::cout << yes << std::endl;
 	s.pop();
-	//std::cout << "MAIN" << std::endl;
 	main = s.top();
 	s.pop();
-	//std::cout << main << std::endl;
 
 	conversationNode* yesNode = create(f);
 	conversationNode* noNode = create(f);
-	/*std::cout << "yesNode->statement" << std::endl;
-	std::cout << yesNode->statement << std::endl;
-	std::cout << "noNode->statement" << std::endl;
-	std::cout << noNode->statement << std::endl;*/
 	p = new conversationNode(main, yes, no, yesNode, noNode);
-	//f.close();
-	/*p->statement = main;
-	p->optionN = no;
-	p->optionY = yes;*/
-
-	//p->y = create(f);
-	//p->n = create(f);
-	//std::cout << "END" << std::endl;
 
 	return p;
 }
@@ -139,7 +125,7 @@ conversationNode* loadDialogue(std::string fn) {
 }
 
 // display
-int winW = 1920, winH = 1080;
+int winW = 1280, winH = 720;
 
 // interaction
 float objectX = 0, objectY = 0, objectScale = 1;
@@ -147,9 +133,9 @@ float xDown = 0, yDown = 0, oldMouseX = 0, oldMouseY = 0;
 
 
 
-void DisplayText(const char* fontName, const char* text, int y) {
+void DisplayText(const char* fontName, const char* text, int y, int x) {
 	SetFont(fontName, 16, 60);  // exact affect of charRes, pixelRes unclear
-	Text(30, y, vec3(0, 0, 0), 10, text);
+	Text(x, y, vec3(0, 0, 0), 10, text);
 }
 
 // Mouse
@@ -160,12 +146,6 @@ void SetDialogueTransform() {
 	dialogue.D_SetTransform(trans*scale);
 };
 
-/*void SetCharacterTransform() {
-	mat4 trans = Translate(objectX, objectY, 0);
-	mat4 scale = Scale(objectScale);
-	character.SetTransform(trans*scale);
-}
-*/
 int WindowHeight(GLFWwindow *w) {
 	int width, height;
 	glfwGetWindowSize(w, &width, &height);
@@ -201,12 +181,10 @@ void MouseMove(GLFWwindow *w, double x, double y) {
 }
 
 int main() {
-
-	std::string end;
 	
 	conversationNode* yes;
 	conversationNode* no;
-	conversationNode* curr = loadDialogue("example.txt");
+	conversationNode* curr = loadDialogue("intro.txt");
 	std::cout << curr->statement << std::endl;
 	std::cout << curr->optionY << std::endl;
 	std::cout << curr->optionN << std::endl;
@@ -229,5 +207,99 @@ int main() {
 	std::cout << "NO BRANCH" << std::endl;
 	std::cout << no->statement << std::endl;
 	
-	std::cin >> end;
+	glfwInit();
+	GLFWwindow *w = glfwCreateWindow(winW, winH, "Dating Sim!", NULL, NULL);
+	glfwSetWindowPos(w, 0, 0);
+	glfwMakeContextCurrent(w);
+	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+
+	background.initialize(0, "sci_fi_background2.tga");
+
+	dialogue.d_initialize(1, "dialogue_TEST.tga", "dialogue_testMAT.tga");
+	characterG.initialize(2, "charactergirl1_neutral.tga", "character1_MAT.tga");
+	upset.initialize(3, "charactergirl1_upset.tga", "character1_MAT.tga");
+	blush.initialize(4, "charactergirl1_blushing.tga", "character1_MAT.tga");
+	choice1.c1_initialize(5, "dialogue_TEST.tga", "dialogue_testMat.tga");
+	choice2.c2_initialize(6, "dialogue_TEST.tga", "dialogue_testMAT.tga");
+
+
+	glfwSwapInterval(1);
+
+	bool interaction = false;
+	char ch = 'a'; 
+	char playerChoice = 'y';
+	CharacterGirl c = characterG;
+	while (!glfwWindowShouldClose(w)) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		background.Display();
+
+		/*if (playerChoice == 'Y' || playerChoice == 'y')
+			blush.Display();
+		else if (playerChoice == 'N' || playerChoice == 'n')
+			upset.Display();
+		else {
+			characterG.Display();
+		}*/
+		
+		c.Display();
+		dialogue.D_Display();
+		DisplayText("C:/Fonts/OpenSans/OpenSans-Bold.ttf", curr->statement.c_str(), 80, 30);
+
+
+		if (interaction == true){
+			if (curr->y != NULL){
+				//display choices
+				std::cout << "Entered Loop" << std::endl;
+				choice1.c1_Display();
+				choice2.c2_Display();
+
+				
+				DisplayText("C:/Fonts/OpenSans/OpenSans-Bold.ttf", curr->optionY.c_str(), 360, 310);//yes option
+				DisplayText("C:/Fonts/OpenSans/OpenSans-Bold.ttf", curr->optionN.c_str(), 360, 830);//no option
+
+				glFlush();
+				glfwSwapBuffers(w);
+				glfwPollEvents();
+
+				playerChoice = _getch();
+				if (playerChoice == 'y' || playerChoice == 'Y') {
+					std::cout << "Entered Y" << std::endl;
+					c = blush;
+					curr = curr->y;
+				}
+				else if (playerChoice == 'n' || playerChoice == 'N') {
+					std::cout << "Entered N" << std::endl;
+					c = upset;
+					curr = curr->n;
+				}
+			}
+		}
+		else {
+			glFlush();
+			glfwSwapBuffers(w);
+			glfwPollEvents();
+		}
+
+		if (ch != 'e' && (playerChoice == 'y' || playerChoice == 'Y' || playerChoice == 'n' || playerChoice == 'N')){
+			ch = _getch();
+
+			if (ch == 'e') {
+				interaction = true;
+			}
+		}
+		else {
+			interaction = false;
+			ch = 's';
+		}
+
+		std::cout << playerChoice << " - " << interaction << std::endl;
+
+	}
+	//terminate
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	const GLuint names[] = { background.textureName, dialogue.d_textureName, characterG.c_textureName, choice1.c1_textureName, choice2.c2_textureName };
+	glfwDestroyWindow(w);
+	glfwTerminate();
+
 }
