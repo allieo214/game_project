@@ -7,8 +7,8 @@
 #include "Background.h"
 #include "Dialogue_Box.h"
 #include "CharacterGirl.h"
-#include "Dialogue_Choice1.h"
-#include "Dialogue_Choice2.h"
+//#include "Dialogue_Choice1.h"
+//#include "Dialogue_Choice2.h"
 #include "Text.h"
 #include <ft2build.h>
 #include <iostream>
@@ -16,6 +16,8 @@
 #include <string>
 #include <stack>
 #include <conio.h>
+#include "../../../Desktop/GraphicsClass/Graphics/Graphics/Dialogue_Choice1.h"
+#include "../../../Desktop/GraphicsClass/Graphics/Graphics/Dialogue_Choice2.h"
 
 
 Background background;
@@ -75,8 +77,6 @@ conversationNode *create(std::ifstream &f)
 	std::string str;
 	std::getline(f, str);
 
-	std::cout << str << std::endl;
-
 	int index = str.length() - 1;
 	if (str == "") {
 		return new conversationNode("", "","", NULL, NULL);
@@ -134,7 +134,12 @@ float xDown = 0, yDown = 0, oldMouseX = 0, oldMouseY = 0;
 
 
 void DisplayText(const char* fontName, const char* text, int y, int x) {
-	SetFont(fontName, 16, 60);  // exact affect of charRes, pixelRes unclear
+	SetFont(fontName, 16, 20);  // exact affect of charRes, pixelRes unclear
+	Text(x, y, vec3(0, 0, 0), 10, text);
+}
+
+void DisplayTextFont(const char* fontName, const char* text, int y, int x, int fontSize) {
+	SetFont(fontName, 16, fontSize);  // exact affect of charRes, pixelRes unclear
 	Text(x, y, vec3(0, 0, 0), 10, text);
 }
 
@@ -255,8 +260,8 @@ int main() {
 				choice2.c2_Display();
 
 				
-				DisplayText("C:/Fonts/OpenSans/OpenSans-Bold.ttf", curr->optionY.c_str(), 360, 310);//yes option
-				DisplayText("C:/Fonts/OpenSans/OpenSans-Bold.ttf", curr->optionN.c_str(), 360, 830);//no option
+				DisplayTextFont("C:/Fonts/OpenSans/OpenSans-Bold.ttf", curr->optionY.c_str(), 360, 180, 20);//yes option
+				DisplayTextFont("C:/Fonts/OpenSans/OpenSans-Bold.ttf", curr->optionN.c_str(), 360, 800, 20);//no option
 
 				glFlush();
 				glfwSwapBuffers(w);
